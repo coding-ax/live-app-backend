@@ -1,0 +1,13 @@
+{
+    "type": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "username": "live-app",
+    "password": "live-app-password",
+    "database": "live_app",
+    "entities": [
+        "dist/**/*.entity{.ts,.js}"
+    ],
+    "synchronize": true,
+    "logging": true
+}

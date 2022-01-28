@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoginModule } from './login/login.module';
-import { RedisCacheModule } from './redis-cache/redis-cache.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
+const TypeOrmInstanceModule = TypeOrmModule.forRoot();
 @Module({
-  imports: [LoginModule, RedisCacheModule],
+  imports: [LoginModule, TypeOrmInstanceModule],
   controllers: [AppController],
   providers: [AppService],
 })
