@@ -33,9 +33,8 @@ export class Encoder {
 
 const encoderInstance = new Encoder();
 
-export function generateOpenId(str: string): string {
-    const now = dayjs().unix()
-    const rawText = `${''}${str}`
+export function generateOpenId(str: string, needTimestamp = true): string {
+    const rawText = `${needTimestamp ? dayjs().unix() : ''}${str}`
     return encoderInstance.translate(rawText);
 }
 
