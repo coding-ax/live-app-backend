@@ -3,11 +3,12 @@ export enum STATUS_CODE {
     ERROR = 1
 }
 
-export type BASE_RESPONSE = {
-    data?: any | any[];
+export type BASE_RESPONSE<T = any | any[]> = {
+    data?: T;
     message: string;
     code: STATUS_CODE
 }
+
 
 export const CLIENT_PARAMS_ERROR: BASE_RESPONSE = {
     message: '参数出错',

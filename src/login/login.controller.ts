@@ -1,13 +1,57 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
 
 import { LoginService } from './login.service';
-import { RegisterRequest } from './dto/login.dto';
+import { RegisterRequest, UpdateProfileRequest } from './dto/login.dto';
 import { BASE_RESPONSE, STATUS_CODE, CLIENT_PARAMS_ERROR, isEmail } from 'src/common';
+import { Response } from 'express'
+import { Cookies } from 'src/user-decoration/user.decoration';
 
 
 @Controller('login')
 export class LoginController {
-    constructor(private readonly loginService: LoginService) { }
+    constructor(private readonly loginService: LoginService,) { }
+    @Post()
+    async login(@Body() { email, password }: RegisterRequest, @Res({ passthrough: true }) response: Response): Promise<BASE_RESPONSE> {
+        if (!email || !password || !isEmail(email)) {
+            return CLIENT_PARAMS_ERROR
+        }
+        const userAuth = await this.loginService.findOne({ email });
+        const { password: verifiedPassword, email: verifiedEmail } = userAuth || {}
+        if (!verifiedEmail) {
+            return {
+                code: STATUS_CODE.ERROR,
+                message: '该邮箱未被注册'
+            }
+        }
+
+        if (!verifiedPassword || password !== verifiedPassword) {
+            return {
+                code: STATUS_CODE.ERROR,
+                message: '密码错误，请检查密码或邮箱是否正确'
+            }
+        }
+
+        // 获取用户资料并存储到redis
+        const data = await this.loginService.authUserLogin(userAuth);
+        response.cookie('open_id', userAuth.open_id, {
+            httpOnly: true,
+            maxAge: 60 * 60 * 24 * 20,
+        })
+        return {
+            code: STATUS_CODE.SUCCESS,
+            message: '',
+            data
+        }
+    }
+
+    @Post('update_profile')
+    async updateProfile(@Body() currentProfile: UpdateProfileRequest, @Cookies('open_id') open_id, @Res({ passthrough: true }) response: Response) {
+        console.log('open_id is ', open_id)
+        return {
+            open_id
+        }
+    }
+
 
     @Post('register')
     async registerUser(@Body() { email, password }: RegisterRequest): Promise<BASE_RESPONSE> {

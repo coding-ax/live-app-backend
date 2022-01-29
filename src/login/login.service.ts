@@ -7,6 +7,9 @@ import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, Repository } from 'typeorm';
 import { UserAuth } from './database/user-auth.entity';
+import { UserDetail } from './database/user-detail.entity';
+import { UserLoginHistory } from './database/user-history.entity';
+import dayjs from 'dayjs';
 
 const VERIFY_MAIL_SUBJECT = "【5分钟内有效】live-app注册验证";
 const baseURL = 'http://localhost:3000/login/register/'
@@ -38,16 +41,26 @@ type VerifyUserResponse = {
     isRegistered?: boolean
 }
 
-type UserSession = {
+type RegisterUserSession = {
     register_verify?: string,
     temp_passwd?: string
 }
 
 type GetRegister = {
-    data: UserSession,
+    data: RegisterUserSession,
     openId: string,
-    registerRedisKey: string
+    registerRedisKey: string,
 }
+
+type LoginUserSession = {
+    detail?: UserDetail,
+    email: string
+}
+
+type UserAuthParamKeys = 'open_id' | 'id' | 'email';
+type UserAuthKey = {
+    [P in UserAuthParamKeys]?: string
+};
 
 @Injectable()
 export class LoginService {
@@ -55,18 +68,52 @@ export class LoginService {
     constructor(private readonly redisCacheService: RedisCacheService,
         @InjectRepository(UserAuth)
         private userAuthRepository: Repository<UserAuth>,
+        @InjectRepository(UserDetail)
+        private userDetailRepository: Repository<UserDetail>,
+        @InjectRepository(UserLoginHistory)
+        private userLoginHistoryRepository: Repository<UserLoginHistory>,
         private connection: Connection
     ) { }
 
-    async findOne(email): Promise<UserAuth> {
-        return await this.userAuthRepository.findOne({ email })
+    async findOne(option: UserAuthKey): Promise<UserAuth> {
+        return await this.userAuthRepository.findOne(option as unknown as Partial<UserAuth>)
+    }
+
+    async getUserAuth({ email, open_id }: UserAuthKey) {
+        const options = open_id ? { open_id } : { email }
+        const userAuth = await this.findOne(options)
+        return userAuth
+    }
+
+
+    async authUserLogin(userAuth: UserAuth): Promise<LoginUserSession> {
+        const { open_id, email, } = userAuth;
+        const redisOpenIdKey = getPrefixKey(open_id);
+        // 保存这次登录记录，埋点记录不需要异步等待
+        this.userLoginHistoryRepository.insert({
+            login_time: dayjs().toString(),
+            open_id: open_id,
+        })
+        const queryRedis = await this.redisCacheService.get(redisOpenIdKey)
+        if (queryRedis) {
+            return queryRedis as LoginUserSession;
+        }
+        // redis 中如果不存在对应信息，则去查询 Mysql 并缓存到 Redis
+        const userDetail = await this.userDetailRepository.findOne({ open_id })
+        const redisCache: LoginUserSession = {
+            detail: userDetail,
+            email
+        }
+        // 将用户信息保存到 redis, session 有效时长 10 分钟, 此处不需要用户端等待
+        this.redisCacheService.set(redisOpenIdKey, redisCache, { ttl: 10 * 60 })
+        return redisCache
     }
 
     async getRedisRegisterKeyByEmail(email): Promise<GetRegister> {
         // 这里的 openId 都是临时的 openId
         const openId = generateOpenId(email, false);
         const registerRedisKey = getPrefixKey(openId);
-        const result: UserSession = await this.redisCacheService.get(registerRedisKey);
+        const result: RegisterUserSession = await this.redisCacheService.get(registerRedisKey);
         return {
             data: result,
             openId,
@@ -84,7 +131,7 @@ export class LoginService {
      */
     async registerUser(email: string, password: string): Promise<RegisterUserResponse> {
         // 检测是否已经注册 判断 MySQL 中是否已经存在该条记录
-        const isRegistered = await this.findOne(email)
+        const isRegistered = await this.findOne({ email })
         if (isRegistered) {
             return {
                 verifyUrl: '',
@@ -136,7 +183,7 @@ export class LoginService {
         // 获取到 id 还原 id 后, 然后查看 redis 中是否存在该 key，用于判断是否过期
         const { email } = decodeOpenId(id);
         // 验证是否已经注册
-        const isRegistered = await this.findOne(email);
+        const isRegistered = await this.findOne({ email });
         if (isRegistered) {
             return {
                 isVerified: false,
@@ -169,7 +216,7 @@ export class LoginService {
     }
 
     async addUser(email, password): Promise<void> {
-        const isExists = await this.findOne(email);
+        const isExists = await this.findOne({ email });
         if (isExists) {
             return
         }
@@ -182,22 +229,6 @@ export class LoginService {
             open_id: realOpenId,
             id: 0
         })
-
-
-        // 插入数据库, 开启事务
-        const queryRunner = this.connection.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-        try {
-            await queryRunner.manager.save(userAuth);
-            await queryRunner.commitTransaction();
-        } catch (err) {
-            console.error(err);
-            //如果遇到错误，可以回滚事务
-            await queryRunner.rollbackTransaction();
-        } finally {
-            //你需要手动实例化并部署一个queryRunner
-            await queryRunner.release();
-        }
+        await this.userAuthRepository.insert(userAuth)
     }
 }
