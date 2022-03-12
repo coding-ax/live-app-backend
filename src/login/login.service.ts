@@ -215,6 +215,12 @@ export class LoginService {
         }
     }
 
+    /**
+     * 新增用户到 user-auth 表
+     * @param email 邮件
+     * @param password 密码
+     * @returns 
+     */
     async addUser(email, password): Promise<void> {
         const isExists = await this.findOne({ email });
         if (isExists) {
