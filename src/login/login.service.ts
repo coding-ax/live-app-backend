@@ -10,6 +10,7 @@ import { UserAuth } from './database/user-auth.entity';
 import { UserDetail } from './database/user-detail.entity';
 import { UserLoginHistory } from './database/user-history.entity';
 import dayjs from 'dayjs';
+import { UpdateProfileRequest } from './dto/login.dto';
 
 const VERIFY_MAIL_SUBJECT = "【5分钟内有效】live-app注册验证";
 const baseURL = 'http://localhost:3000/login/register/'
@@ -86,6 +87,18 @@ export class LoginService {
         return userAuth
     }
 
+    async editProfile(openId: string, userDetail: UpdateProfileRequest): Promise<any> {
+        try {
+            const detail = await this.userDetailRepository.findOne({ open_id: openId });
+            detail.nick_name = userDetail.nickName;
+            detail.avatar_url = userDetail.avatarUrl;
+            detail.signature = userDetail.signature;
+            await this.userDetailRepository.save(detail);
+            return detail;
+        } catch (error) {
+            return {};
+        }
+    }
 
     async authUserLogin(userAuth: UserAuth): Promise<LoginUserSession> {
         const { open_id, email, } = userAuth;

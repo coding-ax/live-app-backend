@@ -1,10 +1,15 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-export const parseData = data => JSON.parse(JSON.stringify(data));
-
 export const GetHeader = createParamDecorator(
-    (data: string, ctx: ExecutionContext) => {
+    (key: string, ctx: ExecutionContext) => {
         const request = ctx.switchToHttp().getRequest();
-        return data ? parseData(request.headers?.[data]) : request.headers;
+        const result = key ? request.headers?.[key] : request.headers;
+        try {
+            const JSONResult = JSON.parse(result);
+            return JSONResult;
+        } catch (error) {
+            // parse 失败说明不是 json 字符串
+            return result;
+        }
     },
 );

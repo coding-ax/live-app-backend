@@ -46,8 +46,14 @@ export class LoginController {
     @Post('update_profile')
     async updateProfile(@Body() currentProfile: UpdateProfileRequest, @GetHeader('open_id') openId, @GetHeader('user-info') userInfo) {
         console.log('open_id is ', openId, userInfo);
+        const result = await this.loginService.editProfile(openId, currentProfile);
+        if (!result) {
+            return CLIENT_PARAMS_ERROR;
+        }
         return {
-            openId
+            code: STATUS_CODE.SUCCESS,
+            message: '',
+            data: result
         }
     }
 
