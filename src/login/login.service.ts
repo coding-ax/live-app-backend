@@ -54,7 +54,8 @@ type GetRegister = {
 
 type LoginUserSession = {
     detail?: UserDetail,
-    email: string
+    email: string,
+    openId: string,
 }
 
 type UserAuthParamKeys = 'open_id' | 'id' | 'email';
@@ -102,7 +103,8 @@ export class LoginService {
         const userDetail = await this.userDetailRepository.findOne({ open_id })
         const redisCache: LoginUserSession = {
             detail: userDetail,
-            email
+            email,
+            openId: open_id
         }
         // 将用户信息保存到 redis, session 有效时长 10 分钟, 此处不需要用户端等待
         this.redisCacheService.set(redisOpenIdKey, redisCache, { ttl: 10 * 60 })
@@ -229,12 +231,20 @@ export class LoginService {
         // 真正用户的注册 openId
         const realOpenId = generateOpenId(email);
         const userAuth: UserAuth = new UserAuth();
+        const userDetail: UserDetail = new UserDetail();
         Object.assign(userAuth, {
             email,
             password,
             open_id: realOpenId,
             id: 0
         })
+        Object.assign(userDetail, {
+            open_id: realOpenId,
+            nick_name: '',
+            signature: '',
+            avatar_url: ''
+        })
         await this.userAuthRepository.insert(userAuth)
+        await this.userDetailRepository.insert(userDetail)
     }
 }
