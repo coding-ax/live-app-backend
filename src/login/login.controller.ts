@@ -4,8 +4,7 @@ import { LoginService } from './login.service';
 import { RegisterRequest, UpdateProfileRequest } from './dto/login.dto';
 import { BASE_RESPONSE, STATUS_CODE, CLIENT_PARAMS_ERROR, isEmail } from 'src/common';
 import { Response } from 'express'
-import { Cookies } from 'src/user-decoration/user.decoration';
-
+import { GetHeader } from 'src/user-decoration/user.decoration';
 
 @Controller('login')
 export class LoginController {
@@ -45,10 +44,10 @@ export class LoginController {
     }
 
     @Post('update_profile')
-    async updateProfile(@Body() currentProfile: UpdateProfileRequest, @Cookies('open_id') open_id, @Res({ passthrough: true }) response: Response) {
-        console.log('open_id is ', open_id)
+    async updateProfile(@Body() currentProfile: UpdateProfileRequest, @GetHeader('open_id') openId, @GetHeader('user-info') userInfo) {
+        console.log('open_id is ', openId, userInfo);
         return {
-            open_id
+            openId
         }
     }
 
