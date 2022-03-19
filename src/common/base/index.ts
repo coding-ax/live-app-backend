@@ -14,3 +14,8 @@ export const CLIENT_PARAMS_ERROR: BASE_RESPONSE = {
     message: '参数出错',
     code: STATUS_CODE.ERROR
 }
+
+export const CLIENT_ACCESS_ERROR: BASE_RESPONSE = {
+    message: '用户权限错误',
+    code: STATUS_CODE.ERROR
+}
