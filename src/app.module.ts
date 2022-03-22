@@ -7,12 +7,13 @@ import { LoginController } from './login/login.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SessionMiddleware } from 'src/middleware/session.middleware';
 import { UploadModule } from './upload/upload.module';
+import { LiveModule } from './live/live.module';
 
 const TypeOrmInstanceModule = TypeOrmModule.forRoot();
 @Module({
   imports: [LoginModule, TypeOrmInstanceModule, CacheModule.register({
     isGlobal: true,
-  }), UploadModule],
+  }), UploadModule, LiveModule],
   controllers: [AppController],
   providers: [AppService],
 })
