@@ -1,8 +1,8 @@
-export const initEnv = () => {
-    const path = require("path");
-    const fs = require("fs");
-    const dotEnv = require("dotenv");
+import path from 'path';
+import fs from 'fs';
+import dotEnv from 'dotenv';
 
+export const initEnv = () => {
     // 先构造出.env*文件的绝对路径
     const appDirectory = fs.realpathSync(process.cwd());
     const resolveApp = (relativePath) => path.resolve(appDirectory, relativePath);
