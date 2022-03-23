@@ -1,13 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class UserLoginHistory {
-    @PrimaryGeneratedColumn()
-    id: number
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    open_id: string;
+  @Column()
+  open_id: string;
 
-    @Column()
-    login_time: string;
+  @Column()
+  login_time: string;
 }

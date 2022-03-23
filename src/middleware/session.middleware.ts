@@ -8,13 +8,14 @@ import { getPrefixKey } from 'src/common';
 
 const redisClient = new Redis({
   host: 'localhost',
-  port: 6379
+  port: 6379,
 });
 
 @Injectable()
 export class SessionMiddleware implements NestMiddleware {
   private userDetailRepository = getRepository(UserDetail);
-  constructor() { }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  constructor() {}
   async use(req: Request, res: Response, next: NextFunction) {
     try {
       const { open_id: openId = '' } = req.headers;
@@ -26,8 +27,8 @@ export class SessionMiddleware implements NestMiddleware {
           data = redisCache;
         } else {
           data = await this.userDetailRepository.findOne({
-            open_id: `${openId}`
-          })
+            open_id: `${openId}`,
+          });
           data && redisClient.set(redisKey, JSON.stringify(data), 'EX', 60 * 5);
         }
         // 把 user-info 放到 headers 里，传递给后续使用
