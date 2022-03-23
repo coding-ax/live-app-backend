@@ -4,6 +4,6 @@ import { LiveService } from './live.service';
 
 @Module({
   controllers: [LiveController],
-  providers: [LiveService]
+  providers: [LiveService],
 })
 export class LiveModule {}

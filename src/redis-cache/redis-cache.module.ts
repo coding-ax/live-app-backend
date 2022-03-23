@@ -1,6 +1,6 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { RedisCacheService } from './redis-cache.service';
-import * as redisStore from 'cache-manager-redis-store'
+import * as redisStore from 'cache-manager-redis-store';
 
 export const CacheInstanceModule = CacheModule.register({
   store: redisStore,
@@ -11,6 +11,6 @@ export const CacheInstanceModule = CacheModule.register({
 @Module({
   providers: [RedisCacheService],
   imports: [CacheInstanceModule],
-  exports: [RedisCacheService]
+  exports: [RedisCacheService],
 })
-export class RedisCacheModule { }
+export class RedisCacheModule {}
