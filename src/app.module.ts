@@ -13,12 +13,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SessionMiddleware } from 'src/middleware/session.middleware';
 import { UploadModule } from './upload/upload.module';
 import { LiveModule } from './live/live.module';
-
-const TypeOrmInstanceModule = TypeOrmModule.forRoot();
+import { LiveController } from './live/live.controller';
 @Module({
   imports: [
     LoginModule,
-    TypeOrmInstanceModule,
+    TypeOrmModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
     }),
@@ -32,6 +31,6 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(SessionMiddleware)
-      .forRoutes(LoginController, UploadController);
+      .forRoutes(LoginController, UploadController, LiveController);
   }
 }
