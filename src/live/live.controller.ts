@@ -2,7 +2,11 @@ import md5 from 'md5';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { BASE_RESPONSE, CLIENT_PARAMS_ERROR, STATUS_CODE } from 'src/common';
 import { GetHeader } from 'src/user-decoration/user.decoration';
-import { ChangeStatusRequest, CreateLiveRequest } from './dto/live.dto';
+import {
+  BaseLiveRequest,
+  ChangeStatusRequest,
+  CreateLiveRequest,
+} from './dto/live.dto';
 import { LiveService } from './live.service';
 
 @Controller('live')
@@ -67,6 +71,32 @@ export class LiveController {
     } catch (error) {
       return {
         message: '状态切换失败',
+        code: STATUS_CODE.ERROR,
+      };
+    }
+  }
+
+  @Get('live-detail')
+  async getLiveDetail(
+    @Body() { liveId }: BaseLiveRequest,
+  ): Promise<BASE_RESPONSE> {
+    try {
+      const result = await this.liveService.getLiveDetail(liveId);
+      if (!result) {
+        return {
+          message: '该直播不存在',
+          code: STATUS_CODE.ERROR,
+        };
+      }
+      return {
+        message: '',
+        code: STATUS_CODE.SUCCESS,
+        data: result,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        message: '获取直播详情失败',
         code: STATUS_CODE.ERROR,
       };
     }
