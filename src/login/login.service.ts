@@ -106,6 +106,7 @@ export class LoginService {
       detail.avatar_url = userDetail.avatarUrl;
       detail.signature = userDetail.signature;
       await this.userDetailRepository.save(detail);
+      // 删除 redis 中的对应缓存
       return detail;
     } catch (error) {
       return {};

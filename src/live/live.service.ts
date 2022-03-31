@@ -10,6 +10,25 @@ export class LiveService {
     private readonly liveDetailRepository: Repository<LiveDetail>,
   ) {}
 
+  async getLiveDetail(liveId: string) {
+    try {
+      const result = await this.liveDetailRepository.findOne({
+        liveId,
+      });
+      // 检测该直播是否存在
+      if (result) {
+        const liveUrl = this.getLiveDetail(liveId);
+        return {
+          detail: result,
+          liveUrl,
+        };
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    return null;
+  }
+
   async getLiveList() {
     try {
       const result = await this.liveDetailRepository.find({

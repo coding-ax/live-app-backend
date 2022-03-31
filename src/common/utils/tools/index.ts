@@ -1,4 +1,5 @@
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+import md5 from 'md5';
 /**
  * 用于转换字符串编码
  * const encoder = new Encoder('utf-8', 'base64')
@@ -71,4 +72,30 @@ export const emailReg = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/;
 
 export const isEmail = (email: string): boolean => {
   return emailReg.test(email);
+};
+
+const baseLiveUrl = process.env.LIVE_PULL_URL;
+const baseLivePushUrl = process.env.LIVE_PUSH_URL;
+const appName = process.env.APP_NAME;
+const appLiveKey = process.env.LIVE_PUSH_KEY;
+export const getLiveDetail = (liveId: string) => {
+  return {
+    rtmp: `rtmp://${baseLiveUrl}/${appName}/${liveId}`,
+    hls: `https://${baseLiveUrl}/${appName}/${liveId}.m3u8`,
+    flv: `https://${baseLiveUrl}/${appName}/${liveId}.flv`,
+    webRtc: `webrtc://${baseLiveUrl}/${appName}/${liveId}`,
+  };
+};
+
+export const getLivePushUrl = (
+  liveId: string,
+  time: Date | Dayjs | string | number,
+) => {
+  const timeStr = Number.parseInt(`${dayjs(time).unix()}`, 10).toString(16);
+  const txSecret = md5(`${appLiveKey}${liveId}${timeStr}`);
+  const url = `${baseLivePushUrl}/${appName}/${liveId}?txSecret=${txSecret}&txTime=${timeStr}`;
+  return {
+    rtmp: `rtmp://${url}`,
+    webRtc: `webrtc://${url}`,
+  };
 };
