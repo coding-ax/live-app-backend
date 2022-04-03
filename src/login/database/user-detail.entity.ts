@@ -2,15 +2,21 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity()
 export class UserDetail {
-  @PrimaryColumn()
-  open_id: string;
+  @PrimaryColumn({
+    name: 'open_id',
+  })
+  openId: string;
 
-  @Column()
-  nick_name: string;
+  @Column({
+    name: 'nick_name',
+  })
+  nickName: string;
 
   @Column()
   signature: string;
 
-  @Column()
-  avatar_url: string;
+  @Column({
+    name: 'avatar_url',
+  })
+  avatarUrl: string;
 }

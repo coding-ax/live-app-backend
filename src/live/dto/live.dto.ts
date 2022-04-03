@@ -12,3 +12,7 @@ export class CreateLiveRequest extends BaseLiveRequest {
   readonly startTime: number;
   readonly endTime: number;
 }
+
+export class GetLiveListRequest {
+  readonly status?: number;
+}

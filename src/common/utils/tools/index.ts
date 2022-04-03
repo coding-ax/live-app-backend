@@ -78,7 +78,7 @@ const baseLiveUrl = process.env.LIVE_PULL_URL;
 const baseLivePushUrl = process.env.LIVE_PUSH_URL;
 const appName = process.env.APP_NAME;
 const appLiveKey = process.env.LIVE_PUSH_KEY;
-export const getLiveDetail = (liveId: string) => {
+export const getLivePullUrl = (liveId: string) => {
   return {
     rtmp: `rtmp://${baseLiveUrl}/${appName}/${liveId}`,
     hls: `https://${baseLiveUrl}/${appName}/${liveId}.m3u8`,

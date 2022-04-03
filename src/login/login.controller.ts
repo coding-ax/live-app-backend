@@ -40,7 +40,7 @@ export class LoginController {
 
     // 获取用户资料并存储到redis
     const data = await this.loginService.authUserLogin(userAuth);
-    response.cookie('open_id', userAuth.open_id, {
+    response.cookie('open_id', userAuth.openId, {
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 20,
     });
