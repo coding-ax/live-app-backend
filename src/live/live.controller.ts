@@ -8,13 +8,25 @@ import {
   CreateLiveRequest,
 } from './dto/live.dto';
 import { LiveService } from './live.service';
+import { LoginService } from 'src/login/login.service';
 
 @Controller('live')
 export class LiveController {
-  constructor(private readonly liveService: LiveService) {}
+  constructor(
+    private readonly liveService: LiveService,
+    private readonly loginService: LoginService,
+  ) {}
   @Get()
   async getLiveList(): Promise<BASE_RESPONSE> {
-    const result = await this.liveService.getLiveList();
+    const liveList = await this.liveService.getLiveList();
+    const userInfoPromiseList = liveList.map((v) =>
+      this.loginService.getUserDetail(v.openId),
+    );
+    const userDetailList = await Promise.all(userInfoPromiseList);
+    const result = liveList.map((v) => ({
+      ...v,
+      userDetail: userDetailList.find((u) => u.open_id === v.openId),
+    }));
     return {
       message: '',
       code: STATUS_CODE.SUCCESS,

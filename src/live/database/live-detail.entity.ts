@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity()
 export class LiveDetail {
@@ -28,6 +28,8 @@ export class LiveDetail {
 
   @Column({
     name: 'update_time',
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
   })
   updateTime: Date;
 

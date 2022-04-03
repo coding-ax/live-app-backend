@@ -29,7 +29,7 @@ export class LiveService {
     return null;
   }
 
-  async getLiveList() {
+  async getLiveList(): Promise<LiveDetail[]> {
     try {
       const result = await this.liveDetailRepository.find({
         status: 1,
