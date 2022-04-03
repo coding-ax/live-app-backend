@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { LIVE_STATUS } from '../dto/live.dto';
 
 @Entity()
 export class LiveDetail {
@@ -34,5 +35,5 @@ export class LiveDetail {
   updateTime: Date;
 
   @Column()
-  status: number;
+  status: LIVE_STATUS;
 }
