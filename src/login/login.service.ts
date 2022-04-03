@@ -9,7 +9,7 @@ import {
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserAuth } from './database/user-auth.entity';
 import { UserDetail } from './database/user-detail.entity';
 import { UserLoginHistory } from './database/user-history.entity';
@@ -17,7 +17,7 @@ import dayjs from 'dayjs';
 import { UpdateProfileRequest } from './dto/login.dto';
 
 const VERIFY_MAIL_SUBJECT = '【5分钟内有效】live-app注册验证';
-const baseURL = 'http://localhost:3000/login/register/';
+const baseURL = 'http://192.168.1.201:3001/login/register/';
 
 const VERIFY_MAIL_TEMPLATE = (link: string): string => `
 <h2 style="text-align: center;">欢迎注册live-app</h2>
@@ -79,13 +79,23 @@ export class LoginService {
     private userDetailRepository: Repository<UserDetail>,
     @InjectRepository(UserLoginHistory)
     private userLoginHistoryRepository: Repository<UserLoginHistory>,
-    private connection: Connection,
   ) {}
 
   async findOne(option: UserAuthKey): Promise<UserAuth> {
     return await this.userAuthRepository.findOne(
       option as unknown as Partial<UserAuth>,
     );
+  }
+
+  async getUserDetail(openId: string): Promise<UserDetail> {
+    try {
+      const result = await this.userDetailRepository.findOne({
+        open_id: openId,
+      });
+      return result;
+    } catch (error) {
+      return null;
+    }
   }
 
   async getUserAuth({ email, open_id }: UserAuthKey) {
@@ -107,6 +117,7 @@ export class LoginService {
       detail.signature = userDetail.signature;
       await this.userDetailRepository.save(detail);
       // 删除 redis 中的对应缓存
+      this.redisCacheService.del(getPrefixKey(openId));
       return detail;
     } catch (error) {
       return {};

@@ -14,5 +14,6 @@ const typeOrmFeatureEntities = [UserAuth, UserDetail, UserLoginHistory];
   imports: [RedisCacheModule, TypeOrmModule.forFeature(typeOrmFeatureEntities)],
   controllers: [LoginController],
   providers: [LoginService],
+  exports: [LoginService],
 })
 export class LoginModule {}
