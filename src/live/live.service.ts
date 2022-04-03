@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { getLivePullUrl } from 'src/common';
 import { Repository } from 'typeorm';
 import { LiveDetail } from './database/live-detail.entity';
+import { LIVE_STATUS } from './dto/live.dto';
 
 @Injectable()
 export class LiveService {
@@ -37,7 +38,7 @@ export class LiveService {
   async getLiveList(): Promise<LiveDetail[]> {
     try {
       const result = await this.liveDetailRepository.find({
-        status: 1,
+        status: LIVE_STATUS.LIVE,
       });
       return result;
     } catch (error) {
@@ -53,7 +54,7 @@ export class LiveService {
    * @returns {LiveDetail[]}
    */
   async getSecretLiveList(
-    status: number,
+    status: LIVE_STATUS.PLAN | LIVE_STATUS.END,
     openId: string,
   ): Promise<LiveDetail[]> {
     try {
@@ -80,7 +81,10 @@ export class LiveService {
     }
   }
 
-  async changeLiveStatus(liveId, status): Promise<boolean> {
+  async changeLiveStatus(
+    liveId: string,
+    status: LIVE_STATUS,
+  ): Promise<boolean> {
     try {
       await this.liveDetailRepository.update(
         {
@@ -97,7 +101,7 @@ export class LiveService {
     }
   }
 
-  async getUserLiveHistory(openId) {
+  async getUserLiveHistory(openId: string) {
     try {
       const result = await this.liveDetailRepository.find({
         where: {
