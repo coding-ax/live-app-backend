@@ -25,7 +25,25 @@ export class LiveController {
     const userDetailList = await Promise.all(userInfoPromiseList);
     const result = liveList.map((v) => ({
       ...v,
-      userDetail: userDetailList.find((u) => u.open_id === v.openId),
+      userDetail: userDetailList.find((u) => u.openId === v.openId),
+    }));
+    return {
+      message: '',
+      code: STATUS_CODE.SUCCESS,
+      data: result,
+    };
+  }
+
+  @Post()
+  async getSecretLiveList(): Promise<BASE_RESPONSE> {
+    const liveList = await this.liveService.getLiveList();
+    const userInfoPromiseList = liveList.map((v) =>
+      this.loginService.getUserDetail(v.openId),
+    );
+    const userDetailList = await Promise.all(userInfoPromiseList);
+    const result = liveList.map((v) => ({
+      ...v,
+      userDetail: userDetailList.find((u) => u.openId === v.openId),
     }));
     return {
       message: '',

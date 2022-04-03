@@ -63,7 +63,7 @@ type LoginUserSession = {
   openId: string;
 };
 
-type UserAuthParamKeys = 'open_id' | 'id' | 'email';
+type UserAuthParamKeys = 'openId' | 'id' | 'email';
 type UserAuthKey = {
   [P in UserAuthParamKeys]?: string;
 };
@@ -90,7 +90,7 @@ export class LoginService {
   async getUserDetail(openId: string): Promise<UserDetail> {
     try {
       const result = await this.userDetailRepository.findOne({
-        open_id: openId,
+        openId,
       });
       return result;
     } catch (error) {
@@ -98,8 +98,8 @@ export class LoginService {
     }
   }
 
-  async getUserAuth({ email, open_id }: UserAuthKey) {
-    const options = open_id ? { open_id } : { email };
+  async getUserAuth({ email, openId }: UserAuthKey) {
+    const options = openId ? { openId } : { email };
     const userAuth = await this.findOne(options);
     return userAuth;
   }
@@ -110,10 +110,10 @@ export class LoginService {
   ): Promise<any> {
     try {
       const detail = await this.userDetailRepository.findOne({
-        open_id: openId,
+        openId: openId,
       });
-      detail.nick_name = userDetail.nickName;
-      detail.avatar_url = userDetail.avatarUrl;
+      detail.nickName = userDetail.nickName;
+      detail.avatarUrl = userDetail.avatarUrl;
       detail.signature = userDetail.signature;
       await this.userDetailRepository.save(detail);
       // 删除 redis 中的对应缓存
@@ -125,23 +125,23 @@ export class LoginService {
   }
 
   async authUserLogin(userAuth: UserAuth): Promise<LoginUserSession> {
-    const { open_id, email } = userAuth;
-    const redisOpenIdKey = getPrefixKey(open_id);
+    const { openId, email } = userAuth;
+    const redisOpenIdKey = getPrefixKey(openId);
     // 保存这次登录记录，埋点记录不需要异步等待
     this.userLoginHistoryRepository.insert({
-      login_time: dayjs().toString(),
-      open_id: open_id,
+      loginTime: dayjs().toString(),
+      openId,
     });
     const queryRedis = await this.redisCacheService.get(redisOpenIdKey);
     if (queryRedis) {
       return queryRedis as LoginUserSession;
     }
     // redis 中如果不存在对应信息，则去查询 Mysql 并缓存到 Redis
-    const userDetail = await this.userDetailRepository.findOne({ open_id });
+    const userDetail = await this.userDetailRepository.findOne({ openId });
     const redisCache: LoginUserSession = {
       detail: userDetail,
       email,
-      openId: open_id,
+      openId,
     };
     // 将用户信息保存到 redis, session 有效时长 10 分钟, 此处不需要用户端等待
     this.redisCacheService.set(redisOpenIdKey, redisCache, { ttl: 10 * 60 });
@@ -280,14 +280,14 @@ export class LoginService {
     Object.assign(userAuth, {
       email,
       password,
-      open_id: realOpenId,
+      openId: realOpenId,
       id: 0,
     });
     Object.assign(userDetail, {
-      open_id: realOpenId,
-      nick_name: '',
+      openId: realOpenId,
+      nickName: '',
       signature: '',
-      avatar_url: '',
+      avatarUrl: '',
     });
     await this.userAuthRepository.insert(userAuth);
     await this.userDetailRepository.insert(userDetail);

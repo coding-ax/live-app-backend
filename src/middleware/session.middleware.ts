@@ -27,7 +27,7 @@ export class SessionMiddleware implements NestMiddleware {
           data = redisCache;
         } else {
           data = await this.userDetailRepository.findOne({
-            open_id: `${openId}`,
+            openId: `${openId}`,
           });
           data && redisClient.set(redisKey, JSON.stringify(data), 'EX', 60 * 5);
         }
