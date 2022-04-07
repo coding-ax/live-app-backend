@@ -14,9 +14,14 @@ export class LiveService {
 
   async getLiveDetail(liveId: string) {
     try {
-      const result = await this.liveDetailRepository.findOne({
-        liveId,
-      });
+      const result = await this.liveDetailRepository.findOne(
+        {
+          liveId,
+        },
+        {
+          select: ['cover', 'startTime', 'endTime', 'title', 'liveId'],
+        },
+      );
       // 检测该直播是否存在
       if (result) {
         const liveUrl = getLivePullUrl(liveId);
@@ -24,6 +29,21 @@ export class LiveService {
           detail: result,
           liveUrl,
         };
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    return null;
+  }
+
+  async delLive(liveId: string) {
+    try {
+      const result = await this.liveDetailRepository.delete({
+        liveId,
+      });
+      // 检测该直播是否存在
+      if (result) {
+        return result;
       }
     } catch (error) {
       console.error(error);
