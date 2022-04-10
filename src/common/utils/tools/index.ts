@@ -92,7 +92,9 @@ export const getLivePushUrl = (
   const baseLivePushUrl = process.env.LIVE_PUSH_URL;
   const appLiveKey = process.env.LIVE_PUSH_KEY;
   const appName = process.env.APP_NAME;
-  const timeStr = Number.parseInt(`${dayjs(time).unix()}`, 10).toString(16);
+  const timeStr = Number.parseInt(`${dayjs(time).unix()}`, 10)
+    .toString(16)
+    .toUpperCase();
   const txSecret = md5(`${appLiveKey}${liveId}${timeStr}`);
   const url = `${baseLivePushUrl}/${appName}/${liveId}?txSecret=${txSecret}&txTime=${timeStr}`;
   return {
