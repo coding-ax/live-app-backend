@@ -84,13 +84,21 @@ export class LiveService {
    * @returns {LiveDetail[]}
    */
   async getSecretLiveList(
-    status: LIVE_STATUS.PLAN | LIVE_STATUS.END,
+    status: LIVE_STATUS | LIVE_STATUS[],
     openId: string,
   ): Promise<LiveDetail[]> {
     try {
+      const where = Array.isArray(status)
+        ? status.map((s) => ({
+            openId,
+            status: s,
+          }))
+        : {
+            status,
+            openId,
+          };
       const result = await this.liveDetailRepository.find({
-        openId,
-        status,
+        where,
       });
       return result;
     } catch (error) {
