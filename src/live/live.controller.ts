@@ -114,14 +114,29 @@ export class LiveController {
   @Get('live-detail')
   async getLiveDetail(
     @Query() { liveId }: BaseLiveRequest,
+    @GetHeader('open_id') openId: string,
   ): Promise<BASE_RESPONSE> {
     try {
-      const result = await this.liveService.getLiveDetail(liveId);
-      if (!result) {
+      const liveDetail = await this.liveService.getLiveDetail(liveId);
+      if (!liveDetail) {
         return {
           message: '该直播不存在',
           code: STATUS_CODE.ERROR,
         };
+      }
+      let result = {
+        ...liveDetail,
+        pushUrl: null,
+      };
+      if (liveDetail.detail.openId === openId) {
+        const pushUrl = await this.liveService.getLivePushUrl(liveId);
+        result = {
+          ...result,
+          pushUrl,
+        };
+      } else {
+        // 如果不是主播，则清除 openId 信息
+        delete result.detail.openId;
       }
       return {
         message: '',

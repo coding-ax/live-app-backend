@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getLivePullUrl } from 'src/common';
+import { getLivePullUrl, getLivePushUrl } from 'src/common';
 import { Repository } from 'typeorm';
 import { LiveDetail } from './database/live-detail.entity';
 import { LIVE_STATUS } from './dto/live.dto';
@@ -19,7 +19,14 @@ export class LiveService {
           liveId,
         },
         {
-          select: ['cover', 'startTime', 'endTime', 'title', 'liveId'],
+          select: [
+            'cover',
+            'startTime',
+            'endTime',
+            'title',
+            'liveId',
+            'openId',
+          ],
         },
       );
       // 检测该直播是否存在
@@ -58,7 +65,10 @@ export class LiveService {
   async getLiveList(): Promise<LiveDetail[]> {
     try {
       const result = await this.liveDetailRepository.find({
-        status: LIVE_STATUS.LIVE,
+        where: {
+          status: LIVE_STATUS.LIVE,
+        },
+        select: ['cover', 'title', 'liveId', 'openId'],
       });
       return result;
     } catch (error) {
@@ -132,6 +142,23 @@ export class LiveService {
     } catch (error) {
       console.error(error);
       return [];
+    }
+  }
+
+  async getLivePushUrl(liveId: string) {
+    try {
+      const isLiveIdExist = await this.liveDetailRepository.findOne({
+        liveId,
+      });
+      if (isLiveIdExist) {
+        const { endTime } = isLiveIdExist;
+        const result = getLivePushUrl(liveId, endTime);
+        return result;
+      }
+      return null;
+    } catch (err) {
+      console.error(err);
+      return null;
     }
   }
 }
