@@ -23,5 +23,5 @@ export class CreateLiveRequest extends BaseLiveRequest {
 }
 
 export class GetSecretLiveListRequest {
-  readonly status?: LIVE_STATUS.END | LIVE_STATUS.PLAN;
+  readonly status?: LIVE_STATUS | LIVE_STATUS[];
 }
