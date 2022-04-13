@@ -74,11 +74,9 @@ export const isEmail = (email: string): boolean => {
   return emailReg.test(email);
 };
 
-const baseLiveUrl = process.env.LIVE_PULL_URL;
-const baseLivePushUrl = process.env.LIVE_PUSH_URL;
-const appName = process.env.APP_NAME;
-const appLiveKey = process.env.LIVE_PUSH_KEY;
-export const getLiveDetail = (liveId: string) => {
+export const getLivePullUrl = (liveId: string) => {
+  const baseLiveUrl = process.env.LIVE_PULL_URL;
+  const appName = process.env.APP_NAME;
   return {
     rtmp: `rtmp://${baseLiveUrl}/${appName}/${liveId}`,
     hls: `https://${baseLiveUrl}/${appName}/${liveId}.m3u8`,
@@ -91,7 +89,12 @@ export const getLivePushUrl = (
   liveId: string,
   time: Date | Dayjs | string | number,
 ) => {
-  const timeStr = Number.parseInt(`${dayjs(time).unix()}`, 10).toString(16);
+  const baseLivePushUrl = process.env.LIVE_PUSH_URL;
+  const appLiveKey = process.env.LIVE_PUSH_KEY;
+  const appName = process.env.APP_NAME;
+  const timeStr = Number.parseInt(`${dayjs(time).unix()}`, 10)
+    .toString(16)
+    .toUpperCase();
   const txSecret = md5(`${appLiveKey}${liveId}${timeStr}`);
   const url = `${baseLivePushUrl}/${appName}/${liveId}?txSecret=${txSecret}&txTime=${timeStr}`;
   return {

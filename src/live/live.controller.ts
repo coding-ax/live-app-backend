@@ -1,11 +1,13 @@
 import md5 from 'md5';
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { BASE_RESPONSE, CLIENT_PARAMS_ERROR, STATUS_CODE } from 'src/common';
 import { GetHeader } from 'src/user-decoration/user.decoration';
 import {
   BaseLiveRequest,
   ChangeStatusRequest,
   CreateLiveRequest,
+  GetSecretLiveListRequest,
+  LIVE_STATUS,
 } from './dto/live.dto';
 import { LiveService } from './live.service';
 import { LoginService } from 'src/login/login.service';
@@ -25,7 +27,28 @@ export class LiveController {
     const userDetailList = await Promise.all(userInfoPromiseList);
     const result = liveList.map((v) => ({
       ...v,
-      userDetail: userDetailList.find((u) => u.open_id === v.openId),
+      userDetail: userDetailList.find((u) => u.openId === v.openId),
+    }));
+    return {
+      message: '',
+      code: STATUS_CODE.SUCCESS,
+      data: result,
+    };
+  }
+
+  @Post()
+  async getSecretLiveList(
+    @GetHeader('open_id') openId,
+    @Body() { status }: GetSecretLiveListRequest,
+  ): Promise<BASE_RESPONSE> {
+    const liveList = await this.liveService.getSecretLiveList(status, openId);
+    const userInfoPromiseList = liveList.map((v) =>
+      this.loginService.getUserDetail(v.openId),
+    );
+    const userDetailList = await Promise.all(userInfoPromiseList);
+    const result = liveList.map((v) => ({
+      ...v,
+      userDetail: userDetailList.find((u) => u.openId === v.openId),
     }));
     return {
       message: '',
@@ -52,7 +75,7 @@ export class LiveController {
       endTime: new Date(endTime),
       openId,
       // 可创建可直播就是未直播状态
-      status: 0,
+      status: LIVE_STATUS.PLAN,
     };
     // 如果有 liveId 则为编辑
     const result = await this.liveService.updateLive(currentCreateLiveDto);
@@ -71,7 +94,7 @@ export class LiveController {
   @Post('status')
   async changeLiveStatus(@Body() { liveId, status }: ChangeStatusRequest) {
     try {
-      if (!liveId || !status) {
+      if (!liveId || typeof status === 'undefined') {
         return CLIENT_PARAMS_ERROR;
       }
       const result = await this.liveService.changeLiveStatus(liveId, status);
@@ -90,10 +113,51 @@ export class LiveController {
 
   @Get('live-detail')
   async getLiveDetail(
-    @Body() { liveId }: BaseLiveRequest,
+    @Query() { liveId }: BaseLiveRequest,
+    @GetHeader('open_id') openId: string,
   ): Promise<BASE_RESPONSE> {
     try {
-      const result = await this.liveService.getLiveDetail(liveId);
+      const liveDetail = await this.liveService.getLiveDetail(liveId);
+      if (!liveDetail) {
+        return {
+          message: '该直播不存在',
+          code: STATUS_CODE.ERROR,
+        };
+      }
+      let result = {
+        ...liveDetail,
+        pushUrl: null,
+      };
+      if (liveDetail.detail.openId === openId) {
+        const pushUrl = await this.liveService.getLivePushUrl(liveId);
+        result = {
+          ...result,
+          pushUrl,
+        };
+      } else {
+        // 如果不是主播，则清除 openId 信息
+        delete result.detail.openId;
+      }
+      return {
+        message: '',
+        code: STATUS_CODE.SUCCESS,
+        data: result,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        message: '获取直播详情失败',
+        code: STATUS_CODE.ERROR,
+      };
+    }
+  }
+
+  @Delete('del')
+  async delLiveDetail(
+    @Query() { liveId }: BaseLiveRequest,
+  ): Promise<BASE_RESPONSE> {
+    try {
+      const result = await this.liveService.delLive(liveId);
       if (!result) {
         return {
           message: '该直播不存在',
@@ -108,7 +172,7 @@ export class LiveController {
     } catch (error) {
       console.error(error);
       return {
-        message: '获取直播详情失败',
+        message: '删除失败',
         code: STATUS_CODE.ERROR,
       };
     }

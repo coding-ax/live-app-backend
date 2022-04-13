@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { getLivePullUrl, getLivePushUrl } from 'src/common';
 import { Repository } from 'typeorm';
 import { LiveDetail } from './database/live-detail.entity';
+import { LIVE_STATUS } from './dto/live.dto';
 
 @Injectable()
 export class LiveService {
@@ -12,12 +14,25 @@ export class LiveService {
 
   async getLiveDetail(liveId: string) {
     try {
-      const result = await this.liveDetailRepository.findOne({
-        liveId,
-      });
+      const result = await this.liveDetailRepository.findOne(
+        {
+          liveId,
+        },
+        {
+          select: [
+            'cover',
+            'startTime',
+            'endTime',
+            'updateTime',
+            'title',
+            'liveId',
+            'openId',
+          ],
+        },
+      );
       // 检测该直播是否存在
       if (result) {
-        const liveUrl = this.getLiveDetail(liveId);
+        const liveUrl = getLivePullUrl(liveId);
         return {
           detail: result,
           liveUrl,
@@ -29,10 +44,62 @@ export class LiveService {
     return null;
   }
 
+  async delLive(liveId: string) {
+    try {
+      const result = await this.liveDetailRepository.delete({
+        liveId,
+      });
+      // 检测该直播是否存在
+      if (result) {
+        return result;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    return null;
+  }
+
+  /**
+   * 获取所有正在进行的直播
+   * @returns {LiveDetail[]}
+   */
   async getLiveList(): Promise<LiveDetail[]> {
     try {
       const result = await this.liveDetailRepository.find({
-        status: 1,
+        where: {
+          status: LIVE_STATUS.LIVE,
+        },
+        select: ['cover', 'title', 'liveId', 'openId'],
+      });
+      return result;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取本人未进行或者已结束的直播
+   * @param {string} status
+   * @param {string} openId
+   * @returns {LiveDetail[]}
+   */
+  async getSecretLiveList(
+    status: LIVE_STATUS | LIVE_STATUS[],
+    openId: string,
+  ): Promise<LiveDetail[]> {
+    try {
+      const where = Array.isArray(status)
+        ? status.map((s) => ({
+            openId,
+            status: s,
+          }))
+        : {
+            status,
+            openId,
+          };
+      const result = await this.liveDetailRepository.find({
+        where,
       });
       return result;
     } catch (error) {
@@ -53,7 +120,10 @@ export class LiveService {
     }
   }
 
-  async changeLiveStatus(liveId, status): Promise<boolean> {
+  async changeLiveStatus(
+    liveId: string,
+    status: LIVE_STATUS,
+  ): Promise<boolean> {
     try {
       await this.liveDetailRepository.update(
         {
@@ -61,6 +131,7 @@ export class LiveService {
         },
         {
           status,
+          updateTime: new Date(),
         },
       );
       return true;
@@ -70,7 +141,7 @@ export class LiveService {
     }
   }
 
-  async getUserLiveHistory(openId) {
+  async getUserLiveHistory(openId: string) {
     try {
       const result = await this.liveDetailRepository.find({
         where: {
@@ -81,6 +152,23 @@ export class LiveService {
     } catch (error) {
       console.error(error);
       return [];
+    }
+  }
+
+  async getLivePushUrl(liveId: string) {
+    try {
+      const isLiveIdExist = await this.liveDetailRepository.findOne({
+        liveId,
+      });
+      if (isLiveIdExist) {
+        const { endTime } = isLiveIdExist;
+        const result = getLivePushUrl(liveId, endTime);
+        return result;
+      }
+      return null;
+    } catch (err) {
+      console.error(err);
+      return null;
     }
   }
 }
