@@ -5,9 +5,13 @@ export class UserLoginHistory {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  open_id: string;
+  @Column({
+    name: 'open_id',
+  })
+  openId: string;
 
-  @Column()
-  login_time: string;
+  @Column({
+    name: 'login_time',
+  })
+  loginTime: string;
 }

@@ -5,8 +5,10 @@ export class UserAuth {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @PrimaryColumn()
-  open_id: string;
+  @PrimaryColumn({
+    name: 'open_id',
+  })
+  openId: string;
 
   @Column()
   email: string;
