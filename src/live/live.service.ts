@@ -23,6 +23,7 @@ export class LiveService {
             'cover',
             'startTime',
             'endTime',
+            'updateTime',
             'title',
             'liveId',
             'openId',
@@ -130,6 +131,7 @@ export class LiveService {
         },
         {
           status,
+          updateTime: new Date(),
         },
       );
       return true;
