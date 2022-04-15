@@ -2,14 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getLivePullUrl, getLivePushUrl } from 'src/common';
 import { Repository } from 'typeorm';
+import { BarrageDetail } from './database/barrage-detail.entity';
+import { Barrage } from './database/barrage.entity';
 import { LiveDetail } from './database/live-detail.entity';
-import { LIVE_STATUS } from './dto/live.dto';
+import { CreateBarrageRequest, LIVE_STATUS } from './dto/live.dto';
+import md5 from 'md5';
 
+interface CurrentBarrage extends Barrage {
+  barrageContent: BarrageDetail;
+}
 @Injectable()
 export class LiveService {
   constructor(
     @InjectRepository(LiveDetail)
     private readonly liveDetailRepository: Repository<LiveDetail>,
+    @InjectRepository(Barrage)
+    private readonly barrageRepository: Repository<Barrage>,
+    @InjectRepository(BarrageDetail)
+    private readonly barrageDetailRepository: Repository<BarrageDetail>,
   ) {}
 
   async getLiveDetail(liveId: string) {
@@ -169,6 +179,65 @@ export class LiveService {
     } catch (err) {
       console.error(err);
       return null;
+    }
+  }
+
+  async createBarrage(
+    openId: string,
+    barrage: CreateBarrageRequest,
+  ): Promise<boolean> {
+    try {
+      const { liveId, barrage: currentBarrage } = barrage;
+      const { content, type } = currentBarrage;
+      const barrageId = md5(`${openId}${new Date().getTime()}${liveId}`);
+      const barrageDetail = new BarrageDetail();
+      Object.assign(barrageDetail, {
+        barrageId,
+        content,
+        type,
+      });
+      await this.barrageDetailRepository.save(barrageDetail);
+      const barrageEntity = new Barrage();
+      Object.assign(barrageEntity, {
+        barrageId,
+        liveId,
+        openId,
+        sendTime: new Date(),
+      });
+      await this.barrageRepository.save(barrageEntity);
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
+  async getBarrageListByTime(
+    liveId: string,
+    startTime: string | number,
+  ): Promise<CurrentBarrage[]> {
+    try {
+      const barrageList = await this.barrageRepository.find({
+        where: {
+          liveId,
+          sendTime: startTime,
+        },
+      });
+      const barrageDetail = await this.barrageDetailRepository.find({
+        where: barrageList.map((v) => ({
+          barrageId: v.barrageId,
+        })),
+      });
+      const result = barrageList.map((barrage) => ({
+        ...barrage,
+        barrageContent: barrageDetail.find(
+          (v) => v.barrageId === barrage.barrageId,
+        ),
+      }));
+      return result;
+    } catch (error) {
+      console.error(error);
+      return [];
     }
   }
 }
