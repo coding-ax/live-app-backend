@@ -5,7 +5,9 @@ import { GetHeader } from 'src/user-decoration/user.decoration';
 import {
   BaseLiveRequest,
   ChangeStatusRequest,
+  CreateBarrageRequest,
   CreateLiveRequest,
+  GetBarrageListRequest,
   GetSecretLiveListRequest,
   LIVE_STATUS,
 } from './dto/live.dto';
@@ -188,5 +190,66 @@ export class LiveController {
       code: STATUS_CODE.SUCCESS,
       data: result,
     };
+  }
+
+  @Post('create_barrage')
+  async createBarrage(
+    @Body() currentBarrage: CreateBarrageRequest,
+    @GetHeader('open_id') openId: string,
+  ) {
+    try {
+      if (!currentBarrage.liveId || !currentBarrage.barrage) {
+        return CLIENT_PARAMS_ERROR;
+      }
+      const result = await this.liveService.createBarrage(
+        openId,
+        currentBarrage,
+      );
+      return {
+        message: '',
+        code: STATUS_CODE.SUCCESS,
+        data: result,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        message: '发送弹幕失败',
+        code: STATUS_CODE.ERROR,
+      };
+    }
+  }
+
+  @Post('barrage')
+  async getBarrageList(@Body() query: GetBarrageListRequest) {
+    try {
+      if (!query.liveId || !query.startTime) {
+        return CLIENT_PARAMS_ERROR;
+      }
+      const { liveId, startTime } = query;
+      const barrageList = await this.liveService.getBarrageListByTime(
+        liveId,
+        startTime,
+      );
+      const userQueryPromiseList = barrageList.map(
+        async (v) => await this.loginService.getUserDetail(v.openId),
+      );
+      const userQueryList = await Promise.all(userQueryPromiseList);
+      const result = barrageList.map((v, i) => ({
+        ...v,
+        user: userQueryList[i],
+      }));
+
+      return {
+        message: '',
+        code: STATUS_CODE.SUCCESS,
+        data: result,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        message: '获取弹幕失败',
+        code: STATUS_CODE.ERROR,
+      };
+    }
   }
 }

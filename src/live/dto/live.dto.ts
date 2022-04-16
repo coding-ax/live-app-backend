@@ -25,3 +25,14 @@ export class CreateLiveRequest extends BaseLiveRequest {
 export class GetSecretLiveListRequest {
   readonly status?: LIVE_STATUS | LIVE_STATUS[];
 }
+
+export class CreateBarrageRequest extends BaseLiveRequest {
+  readonly barrage: {
+    readonly type: string;
+    readonly content: string;
+  };
+}
+
+export class GetBarrageListRequest extends BaseLiveRequest {
+  readonly startTime: number;
+}
