@@ -10,8 +10,8 @@ export class UploadController {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   constructor() {}
   @Post()
-  async getUploadToken(@GetHeader('user-info') userInfo) {
-    if (!userInfo) {
+  async getUploadToken(@GetHeader('open_id') openId) {
+    if (!openId) {
       return CLIENT_ACCESS_ERROR;
     }
     const accessKey = process.env.QINIU_ACCESS_KEY;
