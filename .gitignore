@@ -1,6 +1,7 @@
 # compiled output
 /dist
 /node_modules
+package-lock.json
 
 # Logs
 logs
@@ -36,3 +37,6 @@ lerna-debug.log*
 
 # redis
 dump.rdb
+
+# dotfiles
+.env

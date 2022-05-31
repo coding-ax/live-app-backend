@@ -1,17 +1,19 @@
 import nodemailer from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import { initEnv } from '../../../env';
 
 class Mailer {
   private transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
   constructor() {
+    initEnv();
     this.transporter = nodemailer.createTransport({
-      service: 'qq',
-      host: 'smtp.qq.com',
-      port: 465,
+      service: process.env.EMAIL_SERVICE || 'qq',
+      host: process.env.EMAIL_HOST || 'smtp.qq.com',
+      port: Number.parseInt(process.env.EMAIL_PORT) || 465,
       secure: true,
       auth: {
-        user: 'codingax@foxmail.com',
-        pass: 'qhznluwugrntfffi',
+        user: process.env.EMAIL_AUTH_USER,
+        pass: process.env.EMAIL_AUTH_PASSWORD,
       },
     });
   }
@@ -29,7 +31,7 @@ export const sendMail = async (
   html: string,
 ): Promise<SMTPTransport.SentMessageInfo> => {
   const result = await instance.sendMail({
-    from: 'codingax@qq.com',
+    from: process.env.EMAIL_AUTH_USER,
     to,
     subject,
     html,
